@@ -4,6 +4,7 @@ const Vector3f = @import("../types/vector3f.zig").Vector3f;
 
 pub const LevelEvent = enum(i32) {
     ParticlesDestroyBlock = 2001,
+    ParticlesEvaporate = 2016,
     StartRain = 3001,
     StartThunder = 3002,
     StopRain = 3003,

@@ -4,13 +4,13 @@
     .fingerprint = 0xc8c0bc4c5e706fd7,
     .minimum_zig_version = "0.16.0",
     .dependencies = .{
-        .nbt = .{
-            .url = "git+https://github.com/VantStudios/Nbt.git#6a0c19c8869839347852b5ef0915dca513f012da",
-            .hash = "nbt-0.0.0-lsUufBrRAADisGBZm4XFayu1qBm1yBV_OQA7ffTtUwod",
-        },
         .BinaryStream = .{
-            .url = "git+https://github.com/VantStudios/BinaryStream?ref=master#b86fa752f49db4472d1480aeb0c8cc83462d8b39",
-            .hash = "BinaryStream-0.0.0-gn8mmnJZAQAnFC-kkrSOzigRqEgMsHddZlmmGELc0jAv",
+            .url = "git+https://github.com/nexxii04/BinaryStream.git#b0953025800d6069ceccaad2315a1c8a818105b1",
+            .hash = "BinaryStream-0.0.0-gn8mmkJfAQB7hx3EiIoUs228mEqfXMqE78Fjf_Bdq7We",
+        },
+        .nbt = .{
+            .url = "git+https://github.com/nexxii04/Nbt.git#dbd31d6265cd0dcc6e659822ec2cedd72613c0e8",
+            .hash = "nbt-0.0.0-lsUufBrRAADisGBZm4XFayu1qBm1yBV_OQA7ffTtUwod",
         },
     },
     .paths = .{
