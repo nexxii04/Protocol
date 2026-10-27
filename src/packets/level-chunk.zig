@@ -14,6 +14,7 @@ pub const LevelChunk = struct {
     cache_enabled: bool,
     blobs: []const u64,
     data: []const u8,
+    client_biome_update: bool = false,
 
     pub fn serialize(self: *LevelChunk, stream: *BinaryStream) ![]const u8 {
         try stream.writeVarInt(Packet.LevelChunk);
@@ -38,6 +39,7 @@ pub const LevelChunk = struct {
 
         try stream.writeVarInt(@intCast(self.data.len));
         try stream.write(self.data);
+        try stream.writeBool(self.client_biome_update);
 
         return stream.getBuffer();
     }
@@ -73,6 +75,7 @@ pub const LevelChunk = struct {
 
         const data_length = try stream.readVarInt();
         const data = stream.read(@intCast(data_length));
+        const client_biome_update = try stream.readBool();
 
         return LevelChunk{
             .x = x,
@@ -83,6 +86,7 @@ pub const LevelChunk = struct {
             .cache_enabled = cache_enabled,
             .blobs = blobs,
             .data = data,
+            .client_biome_update = client_biome_update,
         };
     }
 };

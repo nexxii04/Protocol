@@ -108,6 +108,7 @@ fn readUseItemOnEntity(stream: *BinaryStream) !UseItemOnEntityTransactionData {
     const target_entity_runtime_id = try stream.readVarLong();
     const action_type = try stream.readZigZag();
     const hot_bar_slot = try stream.readZigZag();
+    const hand = try stream.readUint8();
     try NetworkItemStackDescriptor.skipShort(stream);
     const position = try Vector3f.read(stream);
     const clicked_position = try Vector3f.read(stream);
@@ -116,6 +117,7 @@ fn readUseItemOnEntity(stream: *BinaryStream) !UseItemOnEntityTransactionData {
         .target_entity_runtime_id = target_entity_runtime_id,
         .action_type = action_type,
         .hot_bar_slot = hot_bar_slot,
+        .hand = hand,
         .position = position,
         .clicked_position = clicked_position,
     };
@@ -126,11 +128,13 @@ fn readReleaseItem(stream: *BinaryStream) !ReleaseItemTransactionData {
     const hot_bar_slot = try stream.readZigZag();
     try NetworkItemStackDescriptor.skipShort(stream);
     const head_position = try Vector3f.read(stream);
+    const hand = try stream.readUint8();
 
     return .{
         .action_type = action_type,
         .hot_bar_slot = hot_bar_slot,
         .head_position = head_position,
+        .hand = hand,
     };
 }
 

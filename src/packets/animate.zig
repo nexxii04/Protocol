@@ -45,11 +45,18 @@ pub const SwingSource = enum(u8) {
     }
 };
 
+pub const HandSlot = enum(u8) {
+    MainHand = 0,
+    OffHand = 1,
+    _,
+};
+
 pub const AnimatePacket = struct {
     action: AnimateAction,
     runtime_entity_id: u64,
     data: f32 = 0,
     swing_source: ?SwingSource = null,
+    hand: HandSlot = .MainHand,
 
     pub fn serialize(self: *const AnimatePacket, stream: *BinaryStream) ![]const u8 {
         try stream.writeVarInt(Packet.Animate);
@@ -62,6 +69,7 @@ pub const AnimatePacket = struct {
         } else {
             try stream.writeBool(false);
         }
+        try stream.writeUint8(@intFromEnum(self.hand));
         return stream.getBuffer();
     }
 
@@ -75,11 +83,13 @@ pub const AnimatePacket = struct {
         if (try stream.readBool()) {
             swing_source = SwingSource.fromWireName(try stream.readVarString());
         }
+        const hand: HandSlot = @enumFromInt(try stream.readUint8());
         return AnimatePacket{
             .action = action,
             .runtime_entity_id = runtime_entity_id,
             .data = data,
             .swing_source = swing_source,
+            .hand = hand,
         };
     }
 };
