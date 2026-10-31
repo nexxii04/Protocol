@@ -9,7 +9,6 @@ const Uuid = @import("uuid.zig").Uuid;
 pub const SerializedSkin = struct {
     pub fn write(stream: *BinaryStream, skin: *const ClientData, allocator: std.mem.Allocator, full_skin_id: []const u8) !void {
         try stream.writeVarString(skin.skin_id);
-        try stream.writeVarString(skin.play_fab_id);
 
         try writeResourcePatch(stream, skin.skin_resource_patch, allocator);
 

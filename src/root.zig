@@ -201,9 +201,9 @@ pub const Uuid = @import("./types/uuid.zig").Uuid;
 pub const Vector2f = @import("./types/vector2f.zig").Vector2f;
 pub const Vector3f = @import("./types/vector3f.zig").Vector3f;
 
-pub const PROTOCOL = 2193;
-pub const COMPATIBLE_PROTOCOLS = [_]i32{ 2168, 2169, 2193 };
-pub const MINECRAFT_VERSION = "1.26.50";
+pub const PROTOCOL = 2225;
+pub const COMPATIBLE_PROTOCOLS = [_]i32{ 2168, 2169, 2193, 2225 };
+pub const MINECRAFT_VERSION = "1.26.60";
 pub const SHIELD_NETWORK_ID = 387;
 
 test {

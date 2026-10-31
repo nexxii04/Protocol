@@ -7,6 +7,7 @@ const DataItem = @import("../types/data-item.zig").DataItem;
 const PropertySyncData = @import("../types/property-sync-data.zig").PropertySyncData;
 const AbilityLayer = @import("../types/ability-layer.zig").AbilityLayer;
 const NetworkItemStackDescriptor = @import("../types/network-item-stack-descriptor.zig").NetworkItemStackDescriptor;
+const PassengerOfBlockData = @import("../types/passenger-of-block-data.zig").PassengerOfBlockData;
 
 pub const AddPlayerPacket = struct {
     uuid: []const u8,
@@ -26,6 +27,7 @@ pub const AddPlayerPacket = struct {
     ability_layers: []const AbilityLayer = &[_]AbilityLayer{},
     device_id: []const u8 = "",
     build_platform: i32 = 0,
+    passenger_of_block: ?PassengerOfBlockData = null,
 
     pub fn serialize(self: *const AddPlayerPacket, stream: *BinaryStream) ![]const u8 {
         try stream.writeVarInt(Packet.AddActor);
@@ -58,6 +60,14 @@ pub const AddPlayerPacket = struct {
         }
 
         try stream.writeVarInt(0);
+
+        if (self.passenger_of_block) |passenger| {
+            try stream.writeBool(true);
+            try PassengerOfBlockData.write(stream, passenger);
+        } else {
+            try stream.writeBool(false);
+        }
+
         try stream.writeVarString(self.device_id);
         try stream.writeInt32(self.build_platform, .Little);
 

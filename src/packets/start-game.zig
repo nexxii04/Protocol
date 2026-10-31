@@ -35,6 +35,7 @@ pub const StartGamePacket = struct {
     editor_world_type: i32,
     created_in_editor: bool,
     exported_from_editor: bool,
+    editor_level_migration_version: i8 = 0,
     day_cycle_stop_time: i32,
     edu_offer: i32,
     edu_features: bool,
@@ -119,6 +120,7 @@ pub const StartGamePacket = struct {
         try stream.writeZigZag(self.editor_world_type);
         try stream.writeBool(self.created_in_editor);
         try stream.writeBool(self.exported_from_editor);
+        try stream.writeInt8(self.editor_level_migration_version);
         try stream.writeZigZag(self.day_cycle_stop_time);
         try stream.writeZigZag(self.edu_offer);
         try stream.writeBool(self.edu_features);
@@ -217,6 +219,7 @@ pub const StartGamePacket = struct {
         const editor_world_type = try stream.readZigZag();
         const created_in_editor = try stream.readBool();
         const exported_from_editor = try stream.readBool();
+        const editor_level_migration_version = try stream.readInt8();
         const day_cycle_stop_time = try stream.readZigZag();
         const edu_offer = try stream.readVarInt();
         const edu_features = try stream.readBool();
@@ -304,6 +307,7 @@ pub const StartGamePacket = struct {
             .editor_world_type = editor_world_type,
             .created_in_editor = created_in_editor,
             .exported_from_editor = exported_from_editor,
+            .editor_level_migration_version = editor_level_migration_version,
             .day_cycle_stop_time = day_cycle_stop_time,
             .edu_offer = edu_offer,
             .edu_features = edu_features,

@@ -13,6 +13,7 @@ pub const PlayerListEntry = struct {
     entity_unique_id: i64 = 0,
     username: []const u8 = "",
     xuid: []const u8 = "",
+    play_fab_id: []const u8 = "",
     platform_online_id: []const u8 = "",
     build_platform: i32 = 0,
     skin: ?*const ClientData = null,
@@ -33,6 +34,7 @@ pub const PlayerListEntry = struct {
         try stream.writeZigZong(entry.entity_unique_id);
         try stream.writeVarString(entry.username);
         try stream.writeVarString(entry.xuid);
+        try stream.writeVarString(entry.play_fab_id);
         try stream.writeVarString(entry.platform_online_id);
         try stream.writeInt32(entry.build_platform, .Little);
         if (entry.skin) |skin| {

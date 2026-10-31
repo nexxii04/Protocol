@@ -3,6 +3,7 @@ const Packet = @import("../enums/packet.zig").Packet;
 const Vector3f = @import("../types/vector3f.zig").Vector3f;
 const DataItem = @import("../types/data-item.zig").DataItem;
 const PropertySyncData = @import("../types/property-sync-data.zig").PropertySyncData;
+const PassengerOfBlockData = @import("../types/passenger-of-block-data.zig").PassengerOfBlockData;
 
 pub const AddEntityPacket = struct {
     unique_entity_id: i64,
@@ -16,6 +17,7 @@ pub const AddEntityPacket = struct {
     body_yaw: f32 = 0,
     entity_metadata: []const DataItem = &[_]DataItem{},
     entity_properties: PropertySyncData,
+    passenger_of_block: ?PassengerOfBlockData = null,
 
     pub fn serialize(self: *const AddEntityPacket, stream: *BinaryStream) ![]const u8 {
         try stream.writeVarInt(Packet.AddEntity);
@@ -42,6 +44,13 @@ pub const AddEntityPacket = struct {
 
         // entity links (empty)
         try stream.writeVarInt(0);
+
+        if (self.passenger_of_block) |passenger| {
+            try stream.writeBool(true);
+            try PassengerOfBlockData.write(stream, passenger);
+        } else {
+            try stream.writeBool(false);
+        }
 
         return stream.getBuffer();
     }

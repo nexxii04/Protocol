@@ -89,7 +89,7 @@ pub const ServerboundDiagnosticsPacket = struct {
     memory_category_values: []const MemoryCategoryCounter = &.{},
     entity_diagnostics: []const EntityDiagnosticTimingInfo = &.{},
     system_diagnostics: []const SystemDiagnosticTimingInfo = &.{},
-    system_categories: []const SystemCategory = &.{},
+    system_categories: ?[]const SystemCategory = null,
     whisker_scopes: []const WhiskerScopeDataSummary = &.{},
 
     pub fn serialize(self: *const ServerboundDiagnosticsPacket, stream: *BinaryStream) ![]const u8 {
@@ -120,9 +120,14 @@ pub const ServerboundDiagnosticsPacket = struct {
             try SystemDiagnosticTimingInfo.write(stream, sd);
         }
 
-        try stream.writeVarInt(@intCast(self.system_categories.len));
-        for (self.system_categories) |sc| {
-            try SystemCategory.write(stream, sc);
+        if (self.system_categories) |categories| {
+            try stream.writeBool(true);
+            try stream.writeVarInt(@intCast(categories.len));
+            for (categories) |sc| {
+                try SystemCategory.write(stream, sc);
+            }
+        } else {
+            try stream.writeBool(false);
         }
 
         try stream.writeVarInt(@intCast(self.whisker_scopes.len));
@@ -185,15 +190,17 @@ pub const ServerboundDiagnosticsPacket = struct {
         }
         packet.system_diagnostics = system_diagnostics;
 
-        const category_count = try stream.readVarInt();
-        const system_categories = try allocator.alloc(SystemCategory, @intCast(category_count));
-        for (0..@intCast(category_count)) |i| {
-            system_categories[i] = .{
-                .category_name = try stream.readVarString(),
-                .system_index = try stream.readInt64(.Little),
-            };
+        if (try stream.readBool()) {
+            const category_count = try stream.readVarInt();
+            const system_categories = try allocator.alloc(SystemCategory, @intCast(category_count));
+            for (0..@intCast(category_count)) |i| {
+                system_categories[i] = .{
+                    .category_name = try stream.readVarString(),
+                    .system_index = try stream.readInt64(.Little),
+                };
+            }
+            packet.system_categories = system_categories;
         }
-        packet.system_categories = system_categories;
 
         const whisker_count = try stream.readVarInt();
         const whisker_scopes = try allocator.alloc(WhiskerScopeDataSummary, @intCast(whisker_count));
@@ -215,7 +222,7 @@ pub const ServerboundDiagnosticsPacket = struct {
         allocator.free(self.memory_category_values);
         allocator.free(self.entity_diagnostics);
         allocator.free(self.system_diagnostics);
-        allocator.free(self.system_categories);
+        if (self.system_categories) |categories| allocator.free(categories);
         allocator.free(self.whisker_scopes);
     }
 };

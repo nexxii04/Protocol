@@ -37,6 +37,7 @@ pub const UseItemOnEntityTransactionData = struct {
     target_entity_runtime_id: u64,
     action_type: i32,
     hot_bar_slot: i32,
+    hand: u8,
     position: Vector3f,
     clicked_position: Vector3f,
 };
@@ -45,6 +46,7 @@ pub const ReleaseItemTransactionData = struct {
     action_type: i32,
     hot_bar_slot: i32,
     head_position: Vector3f,
+    hand: u8,
 };
 
 pub const TransactionData = union(enum) {
