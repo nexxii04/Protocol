@@ -9,8 +9,8 @@
             .hash = "BinaryStream-0.0.0-gn8mmkJfAQB7hx3EiIoUs228mEqfXMqE78Fjf_Bdq7We",
         },
         .nbt = .{
-            .url = "git+https://github.com/nexxii04/Nbt.git#dbd31d6265cd0dcc6e659822ec2cedd72613c0e8",
-            .hash = "nbt-0.0.0-lsUufBrRAADisGBZm4XFayu1qBm1yBV_OQA7ffTtUwod",
+            .url = "git+https://github.com/nexxii04/Nbt.git#c585051a99f4aa84fe82962af54ed68230022a3c",
+            .hash = "nbt-0.0.0-lsUufBbRAADwshsxsdoTDCgpvBLDRo-QUa8QdhdKQMGW",
         },
     },
     .paths = .{
