@@ -13,6 +13,34 @@ fn jsonTypeName(value: std.json.Value) []const u8 {
     };
 }
 
+/// Reads a nested JSON value as text. Some clients send persona piece types as
+/// numbers, so both forms are accepted; anything else becomes an empty string.
+fn dupeJsonText(allocator: std.mem.Allocator, value: std.json.Value) ![]const u8 {
+    return switch (value) {
+        .string => |s| try allocator.dupe(u8, s),
+        .integer => |i| try std.fmt.allocPrint(allocator, "{d}", .{i}),
+        .float => |f| try std.fmt.allocPrint(allocator, "{d}", .{f}),
+        else => "",
+    };
+}
+
+fn jsonInt(value: std.json.Value) i64 {
+    return switch (value) {
+        .integer => |i| i,
+        .float => |f| @intFromFloat(f),
+        .number_string => |s| std.fmt.parseInt(i64, s, 10) catch 0,
+        else => 0,
+    };
+}
+
+fn jsonBool(value: std.json.Value) bool {
+    return switch (value) {
+        .bool => |b| b,
+        .integer => |i| i != 0,
+        else => false,
+    };
+}
+
 fn dupRequiredString(allocator: std.mem.Allocator, object: std.json.ObjectMap, key: []const u8) ![]const u8 {
     const value = object.get(key) orelse {
         std.log.err("Login field '{s}' is missing", .{key});
@@ -156,6 +184,9 @@ pub const ClientData = struct {
     premium_skin: bool,
     cape_on_classic_skin: bool,
     trusted_skin: bool,
+    /// Whether the server skin replaces the one the client picked for itself.
+    /// The clients send this as `OverrideSkin`; it defaults to true.
+    override_skin: bool = true,
     profile_hash: []const u8 = "",
     arm_size: []const u8,
     skin_color: []const u8,
@@ -198,19 +229,17 @@ pub const ClientData = struct {
 
         const getInt = struct {
             fn get(o: std.json.ObjectMap, key: []const u8) i64 {
-                if (o.get(key)) |v| {
-                    return v.integer;
-                }
-                return 0;
+                return if (o.get(key)) |v| jsonInt(v) else 0;
             }
         }.get;
 
         const getBool = struct {
-            fn get(o: std.json.ObjectMap, key: []const u8) bool {
-                if (o.get(key)) |v| {
-                    return v.bool;
-                }
-                return false;
+            fn get(o: std.json.ObjectMap, key: []const u8, default: bool) bool {
+                const value = o.get(key) orelse return default;
+                return switch (value) {
+                    .bool => |b| b,
+                    else => default,
+                };
             }
         }.get;
 
@@ -223,16 +252,16 @@ pub const ClientData = struct {
             for (arr.items, 0..) |item, i| {
                 const a = item.object;
                 anims[i] = .{
-                    .image = if (a.get("Image")) |v| try allocator.dupe(u8, v.string) else "",
-                    .image_width = if (a.get("ImageWidth")) |v| v.integer else 0,
-                    .image_height = if (a.get("ImageHeight")) |v| v.integer else 0,
-                    .animation_type = if (a.get("Type")) |v| v.integer else 0,
+                    .image = if (a.get("Image")) |v| try dupeJsonText(allocator, v) else "",
+                    .image_width = if (a.get("ImageWidth")) |v| jsonInt(v) else 0,
+                    .image_height = if (a.get("ImageHeight")) |v| jsonInt(v) else 0,
+                    .animation_type = if (a.get("Type")) |v| jsonInt(v) else 0,
                     .frames = if (a.get("Frames")) |v| switch (v) {
                         .float => v.float,
                         .integer => @as(f64, @floatFromInt(v.integer)),
                         else => 0.0,
                     } else 0.0,
-                    .expression_type = if (a.get("AnimationExpression")) |v| v.integer else 0,
+                    .expression_type = if (a.get("AnimationExpression")) |v| jsonInt(v) else 0,
                 };
             }
             break :blk anims;
@@ -247,11 +276,11 @@ pub const ClientData = struct {
             for (arr.items, 0..) |item, i| {
                 const p = item.object;
                 pieces[i] = .{
-                    .piece_id = if (p.get("PieceId")) |v| try allocator.dupe(u8, v.string) else "",
-                    .piece_type = if (p.get("PieceType")) |v| try allocator.dupe(u8, v.string) else "",
-                    .pack_id = if (p.get("PackId")) |v| try allocator.dupe(u8, v.string) else "",
-                    .is_default = if (p.get("IsDefault")) |v| v.bool else false,
-                    .product_id = if (p.get("ProductId")) |v| try allocator.dupe(u8, v.string) else "",
+                    .piece_id = if (p.get("PieceId")) |v| try dupeJsonText(allocator, v) else "",
+                    .piece_type = if (p.get("PieceType")) |v| try dupeJsonText(allocator, v) else "",
+                    .pack_id = if (p.get("PackId")) |v| try dupeJsonText(allocator, v) else "",
+                    .is_default = if (p.get("IsDefault")) |v| jsonBool(v) else false,
+                    .product_id = if (p.get("ProductId")) |v| try dupeJsonText(allocator, v) else "",
                 };
             }
             break :blk pieces;
@@ -270,12 +299,12 @@ pub const ClientData = struct {
                     if (cv == .array) {
                         for (cv.array.items, 0..) |c, ci| {
                             if (ci >= 4) break;
-                            colors[ci] = try allocator.dupe(u8, c.string);
+                            colors[ci] = try dupeJsonText(allocator, c);
                         }
                     }
                 }
                 tints[i] = .{
-                    .piece_type = if (t.get("PieceType")) |v| try allocator.dupe(u8, v.string) else "",
+                    .piece_type = if (t.get("PieceType")) |v| try dupeJsonText(allocator, v) else "",
                     .colors = colors,
                 };
             }
@@ -298,10 +327,11 @@ pub const ClientData = struct {
             .cape_image_width = getInt(obj, "CapeImageWidth"),
             .cape_image_height = getInt(obj, "CapeImageHeight"),
 
-            .persona_skin = getBool(obj, "PersonaSkin"),
-            .premium_skin = getBool(obj, "PremiumSkin"),
-            .cape_on_classic_skin = getBool(obj, "CapeOnClassicSkin"),
-            .trusted_skin = getBool(obj, "TrustedSkin"),
+            .persona_skin = getBool(obj, "PersonaSkin", false),
+            .premium_skin = getBool(obj, "PremiumSkin", false),
+            .cape_on_classic_skin = getBool(obj, "CapeOnClassicSkin", false),
+            .trusted_skin = getBool(obj, "TrustedSkin", false),
+            .override_skin = getBool(obj, "OverrideSkin", true),
             .arm_size = try getString(obj, "ArmSize", allocator),
             .skin_color = try getString(obj, "SkinColor", allocator),
 
